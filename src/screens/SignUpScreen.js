@@ -11,10 +11,11 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import SignUpStyles from "../styles/SignUpStyles";
-import { auth } from "../../firebase";
+import { auth,firebase } from "../../firebase";
 import { Link, useNavigation } from "@react-navigation/native";
 
 export default function SignUpScreen() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,7 +57,12 @@ export default function SignUpScreen() {
       .createUserWithEmailAndPassword(email, password)
       .then((userCredentials) => {
         const user = userCredentials.user;
+        const userId = user.uid;
         console.log("User", user.email);
+        firebase.firestore().collection("usernames").doc(userId).set({
+          username: username,
+        })
+        .then(()=>console.log("kullanıcı adı kaydedildi")).catch((error)=>console.log("error saving username:",error));
         Alert.alert(
           "Kayıt Başarılı",
           "Başarılı bir biçimde kaydoldunuz.",
@@ -79,6 +85,15 @@ export default function SignUpScreen() {
       />
       <View style={SignUpStyles.SignUpSection}>
         <TextInput
+          autoCapitalize="none"
+          style={SignUpStyles.input}
+          placeholder="Kullanıcı Adı"
+          value={username}
+          onChangeText={(text) => setUsername(text)}
+        />
+
+        <TextInput
+          autoCapitalize="none"
           style={SignUpStyles.input}
           placeholder="E-Posta"
           value={email}
@@ -86,6 +101,7 @@ export default function SignUpScreen() {
         />
 
         <TextInput
+          autoCapitalize="none"
           style={SignUpStyles.input}
           placeholder="Şifre"
           secureTextEntry={true}
@@ -94,6 +110,7 @@ export default function SignUpScreen() {
         />
 
         <TextInput
+          autoCapitalize="none"
           style={SignUpStyles.input}
           placeholder="Şifrenizi Onaylayın"
           secureTextEntry={true}

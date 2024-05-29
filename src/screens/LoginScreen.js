@@ -72,13 +72,16 @@ export default function LoginScreen() {
         }}
       />
       <View style={LoginStyles.loginSection}>
+
         <TextInput
+          autoCapitalize="none"
           style={LoginStyles.input}
           placeholder="E-Posta"
           value={email}
           onChangeText={(text) => setEmail(text)}
         />
         <TextInput
+          autoCapitalize="none"
           style={LoginStyles.input}
           placeholder="Şifre"
           secureTextEntry={true}
