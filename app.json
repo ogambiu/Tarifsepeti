@@ -1,10 +1,14 @@
 {
   "expo": {
-    "name": "login_app",
+    "name": "Tarifsepeti",
     "slug": "login_app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
+    "androidStatusBar": {
+      "backgroundColor": "#EE4F35",
+      "barStyle": "light-content"
+    },
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./src/assets/splash.png",
@@ -21,10 +25,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.tarifsepeti.google"
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5854201f-ea22-46af-9db8-aa9378fe788c"
+      }
     }
   }
 }

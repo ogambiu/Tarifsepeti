@@ -10,12 +10,35 @@ import {
 } from "react-native";
 import { firebase, auth, storage } from "../../firebase";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen() {
   const [userPosts, setUserPosts] = useState([]);
   const [userEmail, setUserEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
+
+  const fetchProfilePhoto = async () => {
+    try {
+      const userId = firebase.auth().currentUser.uid;
+      const doc = await firebase
+        .firestore()
+        .collection("profile-photos")
+        .doc(userId)
+        .get();
+      const data = doc.data();
+
+      if (data && data.url) {
+        await AsyncStorage.setItem("@profile_photo_url", data.url);
+        return data.url;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching profile photo:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -38,7 +61,32 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  firebase
+  useEffect(() => {
+    const loadProfilePhoto = async () => {
+      try {
+        // AsyncStorage'dan veriyi oku
+        const storedImageUrl = await AsyncStorage.getItem("@profile_photo_url");
+
+        if (storedImageUrl) {
+          setImage(storedImageUrl);
+          setIsLoading(false);
+        } else {
+          // AsyncStorage'da veri yoksa veya eskiyse Firestore'dan veri çek
+          const fetchedImageUrl = await fetchProfilePhoto();
+          if (fetchedImageUrl) {
+            setImage(fetchedImageUrl);
+          }
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error loading profile photo:", error);
+        setIsLoading(false);
+      }
+    };
+    loadProfilePhoto();
+  }, []);
+ 
+  /* firebase
     .firestore()
     .collection("profile-photos")
     .doc(auth.currentUser.uid)
@@ -49,7 +97,7 @@ export default function ProfileScreen() {
         setImage(data.url);
       }
     });
-
+     */
   const deletePost = (postId) => {
     Alert.alert("Postu Sil", "Bu postu silmek istediğinize emin misiniz?", [
       {

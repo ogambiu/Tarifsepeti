@@ -1,8 +1,9 @@
-import { Image, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Image, TouchableOpacity, View } from "react-native";
 import MainScreen from "../screens/MainScreen";
 import LoginScreen from "../screens/LoginScreen";
 import SignUpScreen from "../screens/SignUpScreen";
-import AddRecipeScreen from "../screens/AddRecipeScreen";
+import AddRecipeScreen, { handleSaveRecipe } from "../screens/AddRecipeScreen";
 import PostDetails from "../components/PostDetails";
 import Profile from "../screens/Profile";
 import { firebase } from "../../firebase";
@@ -14,6 +15,8 @@ import {
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator } from "react-native-paper";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -41,7 +44,7 @@ function HomeStack() {
           headerRight: () => (
             <TouchableOpacity
               onPress={() => navigation.setParams({ toggleSearch: true })}
-              style={{ marginRight: 15 }}
+              style={{ marginRight: 10 }}
             >
               <FontAwesome
                 name={route.params?.isSearchVisible ? "close" : "search"}
@@ -77,8 +80,14 @@ function AddRecipeStack() {
           headerStyle: {
             backgroundColor: "#EE4F35",
           },
-          headerShadowVisible: false,
-          headerBackVisible: false,
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={handleSaveRecipe}
+              style={{ marginRight: 10}}
+            >
+              <MaterialCommunityIcons name="check-bold" size={25} color={"#FFF"} />
+            </TouchableOpacity>
+          ),
         }}
       />
     </Stack.Navigator>
@@ -109,18 +118,34 @@ function AuthStack() {
 function AppTabs() {
   const navigation = useNavigation();
 
-  const signOutUser = async () => {
-    try {
-      await firebase.auth().signOut();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Auth" }],
-      });
-    } catch (e) {
-      console.log(e);
-    }
+  const handleLogout = async () => {
+    Alert.alert(
+      "Hesaptan Çıkış Yapmak Üzeresiniz",
+      "Hesabınızdan çıkış yapmak istediğinizden emin misiniz",
+      [
+        {
+          text: "Hayır",
+          onPress: () => null,
+          style: "cancel",
+        },
+        {
+          text: "Evet",
+          onPress: async () => {
+            try {
+              await firebase.auth().signOut();
+              await AsyncStorage.removeItem("@user_data");
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Auth" }],
+              });
+            } catch (error) {
+              alert(error.message);
+            }
+          },
+        },
+      ]
+    );
   };
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -150,6 +175,7 @@ function AppTabs() {
         component={AddRecipeStack}
         options={{
           tabBarShowLabel: false,
+          tabBarHideOnKeyboard: true,
           tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name={focused ? "plus-circle" : "plus-circle-outline"}
@@ -177,8 +203,11 @@ function AppTabs() {
             />
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={signOutUser} style={{ marginRight: 15 }}>
-              <MaterialIcons name="logout" size={25} color={"#FFF"} />
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={{ marginRight: 20 }}
+            >
+              <FontAwesome name="sign-out" size={25} color={"#FFF"} />
             </TouchableOpacity>
           ),
         }}
@@ -188,9 +217,60 @@ function AppTabs() {
 }
 
 export default function AppNavigator() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [, setUserSign] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const userDataInf = await AsyncStorage.getItem("@user_data");
+        if (userDataInf) {
+          setUser(JSON.parse(userDataInf));
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        alert(error.message);
+        setUser(null);
+      }
+      setIsLoading(false);
+    };
+
+    checkUserSession();
+  }, []);
+
+  useEffect(() => {
+    const signInWithStoredData = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem("@user_data");
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          const { email, password } = userData;
+          if (!email || !password) {
+            throw new Error("Email or password is missing");
+          }
+          await firebase.auth().signInWithEmailAndPassword(email, password);
+          setUserSign(firebase.auth().currentUser);
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+    signInWithStoredData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Auth">
+      <Stack.Navigator initialRouteName={user ? "App" : "Auth"}>
         <Stack.Screen
           name="Auth"
           component={AuthStack}
