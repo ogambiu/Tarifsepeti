@@ -80,14 +80,14 @@ function AddRecipeStack() {
           headerStyle: {
             backgroundColor: "#EE4F35",
           },
-          headerRight: () => (
+          /* headerRight: () => (
             <TouchableOpacity
-              onPress={handleSaveRecipe}
+              onPress={handleSaveRecipe} 
               style={{ marginRight: 10}}
             >
               <MaterialCommunityIcons name="check-bold" size={25} color={"#FFF"} />
             </TouchableOpacity>
-          ),
+          ), */
         }}
       />
     </Stack.Navigator>
