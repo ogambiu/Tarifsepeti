@@ -85,9 +85,32 @@ const styles = StyleSheet.create({
 
 function Lel({item}) {
   const [image, setImage] = useState(null)
+  const [username, setUsername] = useState("");
   const navigation = useNavigation();
 
   useEffect(() => {
+    firebase
+      .firestore()
+      .collection('usernames')
+      .doc(item.user_id)
+      .get()
+      .then((doc) => {
+        const data = doc.data();
+        if (data && data.username) {
+          setUsername(data.username);
+        } else {
+          setUsername("Unknown"); 
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching username:', error);
+        setUsername("Unknown");
+      });
+  }, [item.user_id]);
+
+
+  useEffect(() => {
+    
     firebase.firestore().collection('profile-photos')
       .doc(item.user_id)
       .get()
@@ -111,6 +134,7 @@ function Lel({item}) {
           {image === null ? 
             <Image style={{width:50,height:50,borderRadius:100, resizeMode: 'cover'}} source={ {uri:"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} }/> : 
             <Image source={{ uri: image }} style={{width:50,height:50,borderRadius:100, resizeMode: 'cover'}}/>}
+            <Text>{username}</Text>
             <Text>{item.user_email}</Text>
           </View>
             <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.title}</Text>

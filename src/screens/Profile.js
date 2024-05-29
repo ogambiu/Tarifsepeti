@@ -18,6 +18,7 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [username, setUsername] = useState("");;
 
   const fetchProfilePhoto = async () => {
     try {
@@ -37,6 +38,24 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error("Error fetching profile photo:", error);
       return null;
+    }
+  };
+
+  const fetchUsername = async () => {
+    try {
+      const userId = firebase.auth().currentUser.uid;
+      const doc = await firebase
+        .firestore()
+        .collection("usernames")
+        .doc(userId)
+        .get();
+      const data = doc.data();
+
+      if (data && data.username) {
+        setUsername(data.username);
+      }
+    } catch (error) {
+      console.error("Error fetching username:", error);
     }
   };
 
@@ -85,7 +104,11 @@ export default function ProfileScreen() {
     };
     loadProfilePhoto();
   }, []);
- 
+  
+  useEffect(() => {
+    fetchUsername(); 
+  }, []);
+
   /* firebase
     .firestore()
     .collection("profile-photos")
@@ -187,7 +210,7 @@ export default function ProfileScreen() {
             />
           )}
         </TouchableOpacity>
-
+        <Text>{username}</Text>
         <Text style={styles.email}>{userEmail}</Text>
       </View>
       <Text style={{ ...styles.header, fontSize: 30 }}>Tariflerim</Text>
