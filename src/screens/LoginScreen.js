@@ -48,8 +48,8 @@ export default function LoginScreen() {
         .signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-      // Kullanıcı verilerini AsyncStorage'a kaydet
-      const userData = { email, password }; // Bu örnekte sadece email ve password saklanıyor
+      
+      const userData = { email, password }; 
       await AsyncStorage.setItem("@user_data", JSON.stringify(userData));
       navigate.reset({
         index: 0,

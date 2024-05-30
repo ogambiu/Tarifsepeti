@@ -80,13 +80,14 @@ export default function MainScreen() {
     navigation.setParams({ isSearchVisible });
   }, [isSearchVisible]);
 
-  // Kapanma animasyonları
+
   const closeSearch = () => {
     setSearchVisible(false);
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 , backgroundColor: "#FCECDA"
+    }}>
       <Animated.View
         style={{
           ...customStyles.searchContainer,
@@ -99,7 +100,7 @@ export default function MainScreen() {
             filters={filters}
             setTextFilter={setTextFilter}
             textFilter={textFilter}
-            onClose={closeSearch} // Search bileşeni kapatıldığında çalışacak fonksiyon
+            onClose={closeSearch} 
           />
         )}
       </Animated.View>

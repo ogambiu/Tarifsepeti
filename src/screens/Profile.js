@@ -7,39 +7,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from "react-native";
 import { firebase, auth, storage } from "../../firebase";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ProfileScreen() {
+  const windowWidth = Dimensions.get("window").width;
   const [userPosts, setUserPosts] = useState([]);
   const [userEmail, setUserEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [username, setUsername] = useState("");;
-
-  const fetchProfilePhoto = async () => {
-    try {
-      const userId = firebase.auth().currentUser.uid;
-      const doc = await firebase
-        .firestore()
-        .collection("profile-photos")
-        .doc(userId)
-        .get();
-      const data = doc.data();
-
-      if (data && data.url) {
-        await AsyncStorage.setItem("@profile_photo_url", data.url);
-        return data.url;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error fetching profile photo:", error);
-      return null;
-    }
-  };
+  const [username, setUsername] = useState("");
+  const navigation = useNavigation();
 
   const fetchUsername = async () => {
     try {
@@ -50,7 +32,6 @@ export default function ProfileScreen() {
         .doc(userId)
         .get();
       const data = doc.data();
-
       if (data && data.username) {
         setUsername(data.username);
       }
@@ -63,7 +44,6 @@ export default function ProfileScreen() {
     const currentUser = auth.currentUser;
     if (currentUser) {
       setUserEmail(currentUser.email);
-
       const unsubscribe = firebase
         .firestore()
         .collection("recipes")
@@ -75,52 +55,34 @@ export default function ProfileScreen() {
           }));
           setUserPosts(posts);
         });
-
       return () => unsubscribe();
     }
   }, []);
 
   useEffect(() => {
-    const loadProfilePhoto = async () => {
-      try {
-        // AsyncStorage'dan veriyi oku
-        const storedImageUrl = await AsyncStorage.getItem("@profile_photo_url");
+    fetchUsername();
+  }, []);
 
-        if (storedImageUrl) {
-          setImage(storedImageUrl);
-          setIsLoading(false);
-        } else {
-          // AsyncStorage'da veri yoksa veya eskiyse Firestore'dan veri çek
-          const fetchedImageUrl = await fetchProfilePhoto();
-          if (fetchedImageUrl) {
-            setImage(fetchedImageUrl);
-          }
-          setIsLoading(false);
+  useEffect(() => {
+    const fetchProfilePhoto = async () => {
+      try {
+        const userId = auth.currentUser.uid;
+        const doc = await firebase
+          .firestore()
+          .collection("profile-photos")
+          .doc(userId)
+          .get();
+        const data = doc.data();
+        if (data && data.url) {
+          setImage(data.url);
         }
       } catch (error) {
-        console.error("Error loading profile photo:", error);
-        setIsLoading(false);
+        console.error("Error fetching profile photo:", error);
       }
     };
-    loadProfilePhoto();
-  }, []);
-  
-  useEffect(() => {
-    fetchUsername(); 
+    fetchProfilePhoto();
   }, []);
 
-  /* firebase
-    .firestore()
-    .collection("profile-photos")
-    .doc(auth.currentUser.uid)
-    .get()
-    .then((item) => {
-      const data = item.data();
-      if (data) {
-        setImage(data.url);
-      }
-    });
-     */
   const deletePost = (postId) => {
     Alert.alert("Postu Sil", "Bu postu silmek istediğinize emin misiniz?", [
       {
@@ -187,37 +149,53 @@ export default function ProfileScreen() {
     return downloadURL;
   };
 
+  const handlePostDetail = (item) => {
+    navigation.navigate("PostDetails", { item: item });
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Profilim</Text>
-      <View style={styles.userInfo}>
-        <TouchableOpacity
-          onPress={() => {
-            handleImageUpload();
-          }}
-        >
-          {image === null ? (
+      <View style={styles.headerContainer}>
+        <View style={styles.userInfo}>
+          <TouchableOpacity onPress={handleImageUpload}>
             <Image
-              style={{ width: 100, height: 100, borderRadius: 100 }}
+              style={styles.profileImage}
               source={{
-                uri: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                uri:
+                  image ||
+                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
               }}
             />
-          ) : (
-            <Image
-              source={{ uri: image }}
-              style={{ width: 100, height: 100, borderRadius: 100 }}
-            />
-          )}
+          </TouchableOpacity>
+          <View style={styles.userDetails}>
+            <Text style={styles.username}>{username}</Text>
+            <Text style={styles.email}>{userEmail}</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#EE4F35",
+            marginLeft: -20,
+            marginRight: -20,
+            paddingVertical: 10,
+            marginBottom: -10,
+            elevation: 10,
+          }}
+        >
+          {/* <View style={styles.separator} /> */}
+          <Text style={styles.subHeader}>Tariflerim</Text>
         </TouchableOpacity>
-        <Text>{username}</Text>
-        <Text style={styles.email}>{userEmail}</Text>
       </View>
-      <Text style={{ ...styles.header, fontSize: 30 }}>Tariflerim</Text>
       <FlatList
         data={userPosts}
         renderItem={({ item }) => (
-          <View style={styles.postContainer}>
+          <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.touchable}
+        onPress={() => handlePostDetail(item)}
+        key={item.id}
+      >
+        <View style={styles.postContainer}>
             <Text style={styles.postTitle}>{item.title}</Text>
             <Image source={{ uri: item.image_url }} style={styles.postImage} />
             <TouchableOpacity
@@ -227,40 +205,67 @@ export default function ProfileScreen() {
               <Text style={styles.deleteButtonText}>Sil</Text>
             </TouchableOpacity>
           </View>
+      </TouchableOpacity>
         )}
         keyExtractor={(item) => item.id}
       />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#FCECDA",
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 10,
   },
-  header: {
-    fontStyle: "",
-    fontSize: 60,
-    fontWeight: "bold",
-    color: "orange",
-    marginBottom: 20,
+  headerContainer: {
+    backgroundColor: "#EE4F35",
+    paddingLeft: 10,
+    paddingHorizontal: 10,
+    paddingTop: 50,
+    paddingBottom: 10,
+    elevation: 5,
   },
   userInfo: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 40,
   },
-  email: {
-    fontSize: 18,
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+  },
+  userDetails: {
+    marginLeft: 10,
+  },
+  username: {
+    fontSize: 30,
     fontWeight: "bold",
   },
+  email: {
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "white",
+    marginVertical: 0,
+    marginRight: -10,
+    marginLeft: -10,
+  },
+  subHeader: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FCECDA",
+    textAlign: "center",
+  },
   postContainer: {
+    marginTop: 10,
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   postTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
   },
@@ -270,7 +275,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   deleteButton: {
-    backgroundColor: "red",
+    backgroundColor: "#EE4F35",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,

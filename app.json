@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Tarifsepeti",
-    "slug": "login_app",
+    "slug": "tarifsepeti",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
@@ -33,7 +33,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "5854201f-ea22-46af-9db8-aa9378fe788c"
+        "projectId": "d62ff934-7a54-4df7-aed4-b9f7048bf5e8"
       }
     }
   }

@@ -7,7 +7,7 @@ import {
   Image,
   Alert,
   Dimensions,
-  Keyboard, // Import Keyboard API
+  Keyboard, 
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import SignUpStyles from "../styles/SignUpStyles";
@@ -19,7 +19,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false); // State to track keyboard visibility
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false); 
   const navigation = useNavigation();
   const windowWidth = Dimensions.get("window").width;
 
@@ -87,7 +87,7 @@ export default function SignUpScreen() {
         <TextInput
           autoCapitalize="none"
           style={SignUpStyles.input}
-          placeholder="Kullanıcı Adı"
+          placeholder="İsim Soyisim"
           value={username}
           onChangeText={(text) => setUsername(text)}
         />
@@ -124,7 +124,7 @@ export default function SignUpScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      {!isKeyboardVisible && ( // Hide this section when keyboard is visible
+      {!isKeyboardVisible && ( 
         <View style={SignUpStyles.createSection}>
           <View
             style={{
