@@ -1,7 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, RefreshControl, ScrollView } from 'react-native';
-import { firebase, auth } from '../../firebase';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  RefreshControl,
+  ScrollView,
+} from "react-native";
+import { firebase, auth } from "../../firebase";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Posts({ filters, textFilter }) {
   const [recipes, setRecipes] = useState([]);
@@ -12,86 +21,76 @@ export default function Posts({ filters, textFilter }) {
 
   const fetchRecipes = async () => {
     try {
-      const querySnapshot = await firebase.firestore().collection('recipes').get();
-      let recipeList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const querySnapshot = await firebase
+        .firestore()
+        .collection("recipes")
+        .get();
+      let recipeList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-      //console.log('Fetched recipes');
 
-      if (textFilter.length > 0  || filters.length > 0) {
-        let result = recipeList
+      if (textFilter.length > 0 || filters.length > 0) {
+        let result = recipeList;
 
         if (textFilter.length > 0) {
-          result = recipeList.filter((item) => {          
+          result = recipeList.filter((item) => {
             const regex = new RegExp(textFilter, "i");
 
-            return regex.test(item.title)
-          })
+            return regex.test(item.title);
+          });
         }
 
         if (filters.length > 0) {
           function filterAlgotihm(item) {
-
-            let s = false
-            item.ingredients.forEach(element => {
-              if (filters.includes(element)) {
-                s = true
-              }
-            });
-
-            return s
+            return item.ingredients.every((element) =>
+              filters.includes(element)
+            );
           }
 
-          result = result.filter((item) => filterAlgotihm(item))
+          result = result.filter((item) => filterAlgotihm(item));
         }
 
-        setRecipes(result)
-        return
+        setRecipes(result);
+        return;
       }
 
       setRecipes(recipeList);
     } catch (error) {
-      console.error('Error fetching recipes: ', error);
+      console.error("Error fetching recipes: ", error);
     }
   };
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = () => {
     setRefreshing(true);
-    fetchRecipes().then(() => setRefreshing(false))
+    fetchRecipes().then(() => setRefreshing(false));
   };
 
-  return (<>
+  return (
+    <>
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }>
-        
-        
+        }
+      >
         {recipes.map((item, index) => {
-          return <Lel item={item} key={index}/>      
+          return <Lel item={item} key={index} />;
         })}
       </ScrollView>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  touchable: {
-    alignItems: 'center',
-    zIndex: -20
-  },
-});
- 
-
-function Lel({item}) {
-  const [image, setImage] = useState(null)
+function Lel({ item }) {
+  const [image, setImage] = useState(null);
   const [username, setUsername] = useState("");
   const navigation = useNavigation();
 
   useEffect(() => {
     firebase
       .firestore()
-      .collection('usernames')
+      .collection("usernames")
       .doc(item.user_id)
       .get()
       .then((doc) => {
@@ -99,47 +98,123 @@ function Lel({item}) {
         if (data && data.username) {
           setUsername(data.username);
         } else {
-          setUsername("Unknown"); 
+          setUsername("Unknown");
         }
       })
       .catch((error) => {
-        console.error('Error fetching username:', error);
+        console.error("Error fetching username:", error);
         setUsername("Unknown");
       });
   }, [item.user_id]);
 
-
   useEffect(() => {
-    
-    firebase.firestore().collection('profile-photos')
+    firebase
+      .firestore()
+      .collection("profile-photos")
       .doc(item.user_id)
       .get()
       .then((aa) => {
-        const data = aa.data()
+        const data = aa.data();
         if (data) {
-          setImage(data.url)
+          setImage(data.url);
         } else {
-          setImage(null)
+          setImage(null);
         }
-      })})
-  
+      });
+  });
+
   const handlePostDetail = (item) => {
     navigation.navigate("PostDetails", { item: item });
   };
 
-  return <>
-    <TouchableOpacity style={styles.touchable} onPress={() => handlePostDetail(item)} key={item.id}>
-          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: 'black', backgroundColor: '#FCECDA', width: "100%"}}>
-          <View>
-          {image === null ? 
-            <Image style={{width:50,height:50,borderRadius:100, resizeMode: 'cover'}} source={ {uri:"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} }/> : 
-            <Image source={{ uri: image }} style={{width:50,height:50,borderRadius:100, resizeMode: 'cover'}}/>}
-            <Text>{username}</Text>
-            <Text>{item.user_email}</Text>
+  return (
+    <>
+      <TouchableOpacity
+        activeOpacity={0.99}
+        style={styles.touchable}
+        onPress={() => handlePostDetail(item)}
+        key={item.id}
+      >
+        <View style={styles.postContainer}>
+          <View style={styles.header}>
+            <View style={styles.userInfo}>
+              <Image
+                style={styles.userImage}
+                source={{
+                  uri: image
+                    ? image
+                    : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                }}
+              />
+              <Text style={styles.usernameText}>{username}</Text>
+            </View>
           </View>
-            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.title}</Text>
-            <Image style={{ height: 250, width: "full", resizeMode: 'cover' }} source={{ uri: item.image_url }} />
-          </View>
-        </TouchableOpacity>
-      </>
+          <Text style={styles.postTitle}>{item.title}</Text>
+          <Image style={styles.postImage} source={{ uri: item.image_url }} />
+          <Text style={styles.postContext}>Tarif içeriği için tıklayın --{">"} </Text>
+        </View>
+      </TouchableOpacity>
+    </>
+  );
 }
+
+const styles = StyleSheet.create({
+  touchable: {
+    marginVertical: 0,
+  },
+  postContainer: {
+    borderBottomWidth: 0.2,
+    borderBottomColor: "#716A62",
+    backgroundColor: "#FCEFE1",
+    width: "100%",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FCECDA",
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2.84,
+    elevation: 5,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  userImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    resizeMode: "cover",
+  },
+  usernameText: {
+    marginLeft: 10,
+    fontWeight: "bold",
+    color: "#3c3c3c",
+  },
+  postTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginVertical: 10,
+    marginHorizontal: 10,
+  },
+  postContext: {
+    textAlign: "right",
+    fontSize: 15,
+    fontWeight: "normal",
+    fontStyle: "italic",
+    color:"grey",
+    marginVertical: 10,
+    marginHorizontal: 10,
+  },
+  postImage: {
+    height: 250,
+    width: "100%",
+    resizeMode: "cover",
+    marginVertical: 0,
+  },
+});

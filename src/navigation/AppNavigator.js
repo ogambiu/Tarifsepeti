@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Image, TouchableOpacity, View } from "react-native";
+import { Alert, Image, TouchableOpacity, TurboModuleRegistry, View } from "react-native";
 import MainScreen from "../screens/MainScreen";
 import LoginScreen from "../screens/LoginScreen";
 import SignUpScreen from "../screens/SignUpScreen";
@@ -61,7 +61,7 @@ function HomeStack() {
         options={{
           headerTitle: (props) => <LogoTitle {...props} />,
           headerStyle: { backgroundColor: "#EE4F35" },
-          headerShadowVisible: false,
+          headerShadowVisible: true,
           headerBackVisible: true,
         }}
       />
@@ -190,8 +190,8 @@ function AppTabs() {
         component={Profile}
         options={{
           headerTitle: (props) => <LogoTitle {...props} />,
-          headerStyle: { backgroundColor: "#EE4F35" },
-          headerShadowVisible: false,
+          headerStyle: { backgroundColor: "#EE4F35", shadowColor: "#000"},
+          headerShadowVisible: true,
           headerBackVisible: false,
           headerShown: true,
           tabBarShowLabel: false,

@@ -1,11 +1,24 @@
-import { StyleSheet, Text, View ,TextInput, TouchableOpacity, FlatList, ScrollView} from 'react-native'
-import React,{ useState } from 'react'
-import { AntDesign } from '@expo/vector-icons';
-import {ingredientsList} from '../screens/AddRecipeScreen'
-import { Checkbox } from 'react-native-paper';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
+import React, { useState, useEffect } from "react";
+import { AntDesign } from "@expo/vector-icons";
+import { ingredientsList } from "../ingredientData/ingredientsList";
+import { Checkbox } from "react-native-paper";
 
-export default function Search({setFilters: setSelectedOptions, filters: selectedOptions, textFilter, setTextFilter}) {
+export default function Search({
+  setFilters: setSelectedOptions,
+  filters: selectedOptions,
+  textFilter,
+  setTextFilter,
+}) {
   const [showOptions, setShowOptions] = useState(false);
+  const [filteredIngredients, setFilteredIngredients] = useState(ingredientsList);
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);
@@ -20,77 +33,103 @@ export default function Search({setFilters: setSelectedOptions, filters: selecte
     }
   };
 
-  const renderOptionItem = (item,index) => (
+  const renderOptionItem = (item, index) => (
     <TouchableOpacity
       key={index}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5 }}
+      style={{ flexDirection: "row", alignItems: "center", paddingVertical: 5 }}
       onPress={() => toggleOption(item)}
     >
       <Checkbox
-        status={selectedOptions.includes(item) ? 'checked' : 'unchecked'}
-        color="green"
+        status={selectedOptions.includes(item) ? "checked" : "unchecked"}
+        color="white"
       />
-      {/* <AntDesign
-        name={selectedOptions.includes(item) ? 'checkcircle' : 'checkcircleo'}
-        size={24}
-        color="green"
-        style={{ marginRight: 10 }}
-      /> */}
-      <Text>{item}</Text>
+      <Text style={styles.searchContainerText}>{item}</Text>
     </TouchableOpacity>
   );
+
+  const handleTextFilterChange = (text) => {
+    setTextFilter(text);
+    if (showOptions) {
+      const filteredList = ingredientsList.filter((ingredient) =>
+        ingredient.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredIngredients(filteredList);
+    }
+  };
+
+  const clearFilters = () => {
+    setTextFilter("");
+    setSelectedOptions([]);
+    setFilteredIngredients(ingredientsList);
+  };
+
+  useEffect(() => {
+    if (!showOptions) {
+      setFilteredIngredients(ingredientsList);
+    }
+  }, [showOptions]);
 
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <AntDesign style={styles.iconStyle} size={30} color="black" />
-        <TextInput style={styles.inputStyle} placeholder='Ara...' autoCapitalize='none'
+        <TextInput
+          style={styles.inputStyle}
+          placeholder={showOptions ? "Malzeme ara..." : "Tarif ara..."}
+          autoCapitalize="none"
           value={textFilter}
-          onChangeText={setTextFilter}
+          onChangeText={handleTextFilterChange}
         />
+        {textFilter !== "" || selectedOptions.length > 0 ? (
+          <TouchableOpacity onPress={clearFilters}>
+            <AntDesign
+              style={styles.iconStyle3}
+              name="closecircle"
+              size={24}
+              color="black"
+            />
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity onPress={toggleOptions}>
-          <AntDesign style={styles.iconStyle2} name="down" size={24} color="black" />
+          <AntDesign
+            style={styles.iconStyle2}
+            name={showOptions ? "up" : "down"}
+            size={24}
+            color="black"
+          />
         </TouchableOpacity>
       </View>
       {showOptions && (
-        <View >
+        <View>
           <TouchableOpacity
             style={styles.overlayBackground}
-            onPress={() => setShowOptions(false)} 
+            onPress={() => setShowOptions(false)}
           />
           <ScrollView style={styles.dropdownContainer}>
-
-            {ingredientsList.map((a,index) => {
-                return( 
-                <View key={index}>
-                    {renderOptionItem(a,index)}
-                  </View>
-                )
-              }
-            )}
-            <View style={{padding: 20}}/>
-
+            {filteredIngredients.map((a, index) => {
+              return renderOptionItem(a, index);
+            })}
+            <View style={{ padding: 10, color: "white" }} />
           </ScrollView>
         </View>
       )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#EE4F35',
+    backgroundColor: "#EE4F35",
     paddingTop: 10,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FCECDA',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FCECDA",
     marginHorizontal: 10,
     marginBottom: 10,
     height: 40,
     borderRadius: 7,
-
   },
   iconStyle: {
     marginHorizontal: 15,
@@ -103,29 +142,33 @@ const styles = StyleSheet.create({
   iconStyle2: {
     marginRight: 10,
   },
+  iconStyle3: {
+    marginRight: 10,
+  },
   dropdownContainer: {
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: "#EE4F35",
+    color: "white",
     elevation: 5,
+    marginTop: -10,
     padding: 20,
     zIndex: 100,
     overflow: "scroll",
-    maxHeight: 300
+    maxHeight: 300,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   overlayBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   closeButtonText: {
     padding: 10,
-    textAlign: 'center',
-    backgroundColor: 'lightgray',
+    textAlign: "center",
+    backgroundColor: "lightgray",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 10,
     borderRadius: 10,
   },
